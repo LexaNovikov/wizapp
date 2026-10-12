@@ -20,7 +20,6 @@ def get_data():
     sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
     data, _ = sock.recvfrom(1024)
     response = json.loads(data.decode('utf-8'))
-    print(response)
     return response
 
 def send_command(params):
