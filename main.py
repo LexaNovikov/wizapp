@@ -1,57 +1,49 @@
-import socket
-import json
-import tkinter as tk
-# Укажи IP-адрес твоей лампы WiZ
-WIZ_IP = "192.168.1.92"
-WIZ_PORT = 38899
-
-# def get_data():
-#     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#     command = {
-#         "method": "getPilot"
-#     }
-#     sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
-#     data, _ = sock.recvfrom(1024)
-#     response = json.loads(data.decode('utf-8'))
-#     print(response)
-#     return response
-#
-# def send_command(params):
-#     command = {
-#         "method": "setPilot",
-#         "params": params
-#     }
-#     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#     sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
-# def turn_off():
-#      send_command({"state": False})
-# def turn_on():
-#     send_command({"state": True})
-# def change_temp(val):
-#     send_command({"temp": int(val)})
-# def set_warm():
-#     send_command({"temp": 2700})
-# def change_dimming(val):
-#     send_command({"dimming": int(val)})
-# def set_yut():
-#     data = get_data()
-#     current_dimming = data['result']['dimming']
-#     send_command({"dimming":current_dimming//2, "temp": 2700})
-# turn_on()
 import sys
 import socket
+import os
 import json
+
+import dotenv
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QSlider
 from PyQt6.QtCore import Qt
+dotenv.load_dotenv()
+# Укажи IP-адрес твоей лампы WiZ
+WIZ_IP = os.getenv("lamp_ip")
 
+WIZ_PORT = 38899
+
+def get_data():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    command = {
+        "method": "getPilot"
+    }
+    sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
+    data, _ = sock.recvfrom(1024)
+    response = json.loads(data.decode('utf-8'))
+    print(response)
+    return response
 
 def send_command(params):
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        command = {"method": "setPilot", "params": params}
-        sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
-    except Exception:
-        pass
+    command = {
+        "method": "setPilot",
+        "params": params
+    }
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
+def turn_off():
+     send_command({"state": False})
+def turn_on():
+    send_command({"state": True})
+def change_temp(val):
+    send_command({"temp": int(val)})
+def set_warm():
+    send_command({"temp": 2700})
+def change_dimming(val):
+    send_command({"dimming": int(val)})
+def set_yut():
+    data = get_data()
+    current_dimming = data['result']['dimming']
+    send_command({"dimming":current_dimming//2, "temp": 2700})
 
 
 class WizApp(QWidget):
@@ -69,15 +61,16 @@ class WizApp(QWidget):
         # Задаем полупрозрачный темный фон через CSS (rgba), а текст делаем белым
         self.setStyleSheet("""
             QWidget {
-                background-color: rgba(30, 30, 30, 200); /* 200 из 255 - это степень непрозрачности */
+                background-color: rgba(30, 30, 30, 0); /* 200 из 255 - это степень непрозрачности */
                 border-radius: 15px;
                 color: white;
-                font-family: 'Ubuntu'; /* Твой шрифт */
+                font-family: 'JetBrainsMono NF Medium'; /* Твой шрифт */
             }
             QPushButton {
                 background-color: rgba(60, 60, 60, 255);
                 border-radius: 8px;
                 padding: 10px;
+                font-size: 14px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -126,7 +119,9 @@ class WizApp(QWidget):
 
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(2200, 6500)
-        slider.setValue(4000)
+        data = get_data()
+        print(data)
+        slider.setValue(data["result"]["temp"])
         slider.valueChanged.connect(lambda val: send_command({"temp": val}))
         layout.addWidget(slider)
 
@@ -136,8 +131,8 @@ class WizApp(QWidget):
 
         slider = QSlider(Qt.Orientation.Horizontal)
         slider.setRange(10, 100)
-        slider.setValue(4000)
-        slider.valueChanged.connect(lambda val: send_command({"temp": val}))
+        slider.setValue(data['result']['dimming'])
+        slider.valueChanged.connect(lambda val: send_command({"dimming": val}))
         layout.addWidget(slider)
         self.setLayout(layout)
 
