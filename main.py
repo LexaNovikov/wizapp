@@ -14,14 +14,18 @@ WIZ_PORT = 38899
 
 def get_data():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(1.0)
     command = {
         "method": "getPilot"
     }
-    sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
-    data, _ = sock.recvfrom(1024)
-    response = json.loads(data.decode('utf-8'))
-    return response
-
+    try:
+        sock.sendto(json.dumps(command).encode('utf-8'), (WIZ_IP, WIZ_PORT))
+        data, _ = sock.recvfrom(1024)
+        response = json.loads(data.decode('utf-8'))
+        return response
+    except (socket.timeout, socket.error) as e:
+        print(e)
+        return None
 def send_command(params):
     command = {
         "method": "setPilot",
